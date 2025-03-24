@@ -3,9 +3,10 @@ import cv2 as cv
 
 def homographies(img):
     table_pt = np.array([[19,382], [657,440], [675, 175], [120,-145]])
-    reel_pt = np.array([[0,600], [800,600], [800,0], [0,0]])
+    tab_h, tab_w, factor = 115, 200, 4
+    reel_pt = np.array([[0,tab_h*factor], [tab_w*factor,tab_h*factor], [tab_w*factor,0], [0,0]])
     h, status = cv.findHomography(table_pt, reel_pt)
-    im_dst = cv.warpPerspective(img, h, (800,600))
+    im_dst = cv.warpPerspective(img, h, (tab_w*factor,tab_h*factor))
     return im_dst
 
 cap = cv.VideoCapture("Ressources/Video/Mousse.mp4")
