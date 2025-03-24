@@ -38,18 +38,21 @@ for fname in images:
 cv.destroyAllWindows()
 
 ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
-with open("Output/cam_parameters.npz", "wb") as f: np.savez(f, mtx=mtx, dist=dist, rvecs=rvecs, tvecs=tvecs)
+with open("cam_parameters.npz", "wb") as f: np.savez(f, mtx=mtx, dist=dist, rvecs=rvecs, tvecs=tvecs)
+
+print("Camera parameters saved")
+print(mtx)
 
 img = cv.imread('Ressources/Checkboard/Checkboard (1).jpg')
 h,  w = img.shape[:2]
-newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+newcameramtx,   = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
 
 # undistort
 dst = cv.undistort(img, mtx, dist, None, newcameramtx)
 
 # crop the image
-x, y, w, h = roi
-dst = dst[y:y+h, x:x+w]
+# x, y, w, h = roi
+# dst = dst[y:y+h, x:x+w]
 cv.imwrite('Output/etallonage (1).jpg', dst)
 
 img = cv.imread('Ressources/Checkboard/Checkboard (13).jpg')
@@ -59,9 +62,9 @@ newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
 # undistort
 dst = cv.undistort(img, mtx, dist, None, newcameramtx)
 
-# crop the image
-x, y, w, h = roi
-dst = dst[y:y+h, x:x+w]
+# # crop the image
+# x, y, w, h = roi
+# dst = dst[y:y+h, x:x+w]
 cv.imwrite('Output/etallonage (13).jpg', dst)
 
 mean_error = 0
@@ -70,4 +73,4 @@ for i in range(len(objpoints)):
     error = cv.norm(imgpoints[i], imgpoints2, cv.NORM_L2)/len(imgpoints2)
     mean_error += error
 
-print( "total error: {}".format(mean_error/len(objpoints)) )
+print("total error: {}".format(mean_error/len(objpoints)))
