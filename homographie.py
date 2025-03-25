@@ -1,6 +1,7 @@
 import numpy as np
 import cv2 as cv
 
+
 def homographies(img):
     table_pt = np.array([[19,382], [657,440], [675, 175], [120,-145]])
     tab_h, tab_w, factor = 115, 200, 4
@@ -9,15 +10,31 @@ def homographies(img):
     im_dst = cv.warpPerspective(img, h, (tab_w*factor,tab_h*factor))
     return im_dst
 
-def isolation(img):
-    low_mousse = np.array([100,85,85])
-    high_mousse = np.array([155,255,175])
-    hsv = cv.cvtColor(img, cv.COLOR_RGB2HSV)
-    mask = cv.inRange(hsv, low_mousse, high_mousse)
-    mask = cv.dilate(mask, kernel=np.ones((2, 2), np.uint8), iterations=4)
+
+def isolation(img, vid):
+    if vid == "mousse":
+        low = np.array([100,85,85])
+        high = np.array([155,255,175])
+        hsv = cv.cvtColor(img, cv.COLOR_RGB2HSV)
+        mask = cv.inRange(hsv, low, high)
+        mask = cv.dilate(mask, kernel=np.ones((2, 2), np.uint8), iterations=4)
+    elif vid == "rugby":
+        low = np.array([10, 150, 40])
+        high = np.array([50, 255, 120])
+        hsv = cv.cvtColor(img, cv.COLOR_RGB2HSV)
+        mask = cv.inRange(hsv, low, high)
+        mask = cv.dilate(mask, kernel=np.ones((4, 4), np.uint8), iterations=3)
+    else:
+        low = np.array([60, 50, 80])
+        high = np.array([170, 150, 210])
+        hsv = cv.cvtColor(img, cv.COLOR_RGB2HSV)
+        mask = cv.inRange(hsv, low, high)
+        mask = cv.dilate(mask, kernel=np.ones((2, 2), np.uint8), iterations=4)
+
     res = cv.bitwise_and(img, img, mask=mask)
     res = apply_moments(mask, res)
     return res
+
 
 def apply_moments(mask, img):
     moments = cv.moments(mask)
@@ -34,23 +51,36 @@ def apply_moments(mask, img):
 
     return img
 
-cap = cv.VideoCapture("Ressources/Video/Mousse.mp4")
-while cap.isOpened():
-    # Capture frame-by-frame
-    ret, frame = cap.read()
-    if ret == True:
-        # Display the resulting frame
-        frame = homographies(frame)
-        frame = isolation(frame)
-        cv.imshow('Frame', frame)
-        # Press Q on keyboard to exit
-        if cv.waitKey(200) & 0xFF == ord('q'):
+
+def play_vid(cap, vid):
+    while cap.isOpened():
+        # Capture frame-by-frame
+        ret, frame = cap.read()
+        if ret == True:
+            # Display the resulting frame
+            frame = homographies(frame)
+            frame = isolation(frame, vid)
+            cv.imshow('Frame', frame)
+            # Press Q on keyboard to exit
+            if cv.waitKey(200) & 0xFF == ord('q'):
+                break
+        # Break the loop
+        else:
             break
 
-    # Break the loop
-    else:
-        break
 
-# When everything done, release
-# the video capture object
-cap.release()
+if __name__ == '__main__':
+    vid_name = 'mousse'
+    if vid_name == 'mousse':
+        cap = cv.VideoCapture("Ressources/Video/Mousse.mp4")
+    elif vid_name == 'rugby':
+        cap = cv.VideoCapture("Ressources/Video/Rugby.mp4")
+    else:
+        vid_name = 'tennis'
+        cap = cv.VideoCapture("Ressources/Video/Tennis.mp4")
+
+    play_vid(cap, vid_name)
+
+    # When everything done, release
+    # the video capture object
+    cap.release()
