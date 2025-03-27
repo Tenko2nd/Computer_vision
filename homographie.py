@@ -27,7 +27,7 @@ def get_speed(tab_centre):
 def get_parabola(tab_centre):
     parab_pts = None
     if len(tab_centre) >= 3:
-        if all(centre is not None for centre in tab_centre[-3:]):
+        if sum(1 for centre in tab_centre if centre is not None) >= 3:
             posListX, posListY = [], []
             for centre in tab_centre:
                 if centre is not None:
@@ -44,13 +44,17 @@ def get_parabola(tab_centre):
     return parab_pts
 
 
-def print_value(img, tab_centre):
+def print_value(img, tab_centre, tab_centre_pred):
     if any(centre is not None for centre in tab_centre):
         parab_pts = get_parabola(tab_centre)
         cv.polylines(img, [parab_pts], False, (255, 0, 255), 3)
         for centre in tab_centre:
             if centre is not None:
                 img = cv.circle(img, centre, radius=5, color=(255, 0, 0), thickness=-1)
+        speed = get_speed(tab_centre)
+        for centre_pred in tab_centre_pred:
+            if centre_pred is not None:
+                img = cv.circle(img, centre_pred, radius=5, color=(0, 255, 0), thickness=-1)
         speed = get_speed(tab_centre)
         if speed is not None:
             cv.putText(img, str(speed) + "m/s", (tab_centre[-1][0] + 20, tab_centre[-1][1] + 20), color=(0, 0, 255),
@@ -59,22 +63,21 @@ def print_value(img, tab_centre):
     return img
 
 
-def apply_kalman(img, kalman_filter, tab_centre):
-    if any(centre is not None for centre in tab_centre):
-        etat = kalman_filter.predict().astype(np.int32)
-        print(etat)
-        cv.circle(img, (int(etat[0]), int(etat[1])), 2, (0, 255, 0), 5)
-        cv.arrowedLine(img, (int(etat[0]), int(etat[1])), (int(etat[0] + etat[2]), int(etat[1] + etat[3])),
-                       color=(0, 255, 0),
-                       thickness=3,
-                       tipLength=0.2)
+def apply_kalman(img, tab_centre, tab_centre_pred):
+    if sum(1 for centre in tab_centre if centre is not None) > 2 and KF is not None:
+        etat = KF.predict().astype(np.int32)
+        cv.circle(img, (int(etat[0].item()), int(etat[1].item())), 2, (0, 255, 0), 5)
+        cv.arrowedLine(img, (int(etat[0].item()), int(etat[1].item())),
+                       (int(etat[0].item() + etat[2].item()), int(etat[1].item() + etat[3].item())),
+                       color=(0, 255, 0),thickness=3,tipLength=0.2)
         if tab_centre[-1] is not None:
-            cv.circle(img, (tab_centre[-1][0], tab_centre[-1][1]), 10, (0, 0, 255), 2)
-            kalman_filter.update(np.expand_dims(tab_centre[-1], axis=-1))
+            KF.update(np.expand_dims(tab_centre[-1], axis=-1))
+        else:
+            tab_centre_pred.append((etat[0].item(), etat[1].item()))
     return img
 
 
-def isolation(img, vid, tab_centre, kalman_filter):
+def isolation(img, vid, tab_centre,tab_centre_pred):
     if vid == "mousse":
         low = np.array([100, 85, 85])
         high = np.array([155, 255, 175])
@@ -99,11 +102,18 @@ def isolation(img, vid, tab_centre, kalman_filter):
 
     # img = cv.bitwise_and(img, img, mask=mask)
     img = apply_moments(mask, img, tab_centre, min_area)
-    img = print_value(img, tab_centre)
-    if kalman_filter is None and tab_centre[-1] is not None:
-        kalman_filter = KalmanFilter(C.delta_t, tab_centre[-1])
-    img = apply_kalman(img, kalman_filter, tab_centre)
+    img = print_value(img, tab_centre, tab_centre_pred)
+    img = apply_kalman(img, tab_centre, tab_centre_pred)
     return img
+
+
+def create_kalman(tab_centre):
+    global KF
+    centroid = tab_centre[-1]
+    if tab_centre[-2] is not None and tab_centre[-1] is not None:
+        speedx = (tab_centre[-1][0] - tab_centre[-2][0])/C.delta_t
+        speedy = (tab_centre[-1][1] - tab_centre[-2][1])/C.delta_t
+        KF = KalmanFilter(C.delta_t, centroid, (speedx, speedy))
 
 
 def apply_moments(mask, img, tab_centre, min_area):
@@ -125,20 +135,22 @@ def apply_moments(mask, img, tab_centre, min_area):
     centroid = (int(moments['m10'] / moments['m00']), int(moments['m01'] / moments['m00']))
     tab_centre.append(centroid)
 
+    if sum(1 for centre in tab_centre if centre is not None) == 2 and KF is None:
+        create_kalman(tab_centre)
     return img
 
 
-def play_vid(cap, vid, tab_centre, kalman_filter):
+def play_vid(cap, vid, tab_centre, tab_centre_pred):
     while cap.isOpened():
         # Capture frame-by-frame
         ret, frame = cap.read()
         if ret == True:
             # Display the resulting frame
             frame = homographies(frame)
-            frame = isolation(frame, vid, tab_centre, kalman_filter)
+            frame = isolation(frame, vid, tab_centre, tab_centre_pred)
             cv.imshow('Frame', frame)
             # Press Q on keyboard to exit
-            if cv.waitKey(200) & 0xFF == ord('q'):
+            if cv.waitKey(500) & 0xFF == ord('q'):
                 break
         # Break the loop
         else:
@@ -146,7 +158,7 @@ def play_vid(cap, vid, tab_centre, kalman_filter):
 
 
 if __name__ == '__main__':
-    vid_name = 'mousse'
+    vid_name = 'rugby'
     if vid_name == 'mousse':
         cap = cv.VideoCapture("Ressources/Video/Mousse.mp4")
     elif vid_name == 'rugby':
@@ -155,10 +167,12 @@ if __name__ == '__main__':
         vid_name = 'tennis'
         cap = cv.VideoCapture("Ressources/Video/Tennis.mp4")
 
+    global KF
     KF = None
 
     tab_centroid = []
-    play_vid(cap, vid_name, tab_centroid, KF)
+    tab_centroid_pred = []
+    play_vid(cap, vid_name, tab_centroid, tab_centroid_pred)
 
     # When everything done, release
     # the video capture object

@@ -2,29 +2,34 @@ import numpy as np
 
 
 class KalmanFilter(object):
-    def __init__(self, dt, point):
+    def __init__(self, dt, point, speed):
         self.dt = dt
 
         # Vecteur d'etat initial
-        self.E = np.matrix([[point[0]], [point[1]], [0], [0]])
+        self.E = np.matrix([[point[0]], [point[1]], [speed[0]], [speed[1]], [0], [9.81]])
 
         # Matrice de transition
-        self.A = np.matrix([[1, 0, self.dt, 0],
-                            [0, 1, 0, self.dt],
-                            [0, 0, 1, 0],
-                            [0, 0, 0, 1]])
+        self.A = np.matrix([[1, 0,   self.dt, 0,    (self.dt**2)/2, 0],
+                            [0, 1,   0, self.dt,    0, -(self.dt**2)/2],
+                            [0, 0,   1, 0,          self.dt, 0],
+                            [0, 0,   0, 1,          0, self.dt],
+                            [0, 0,   0, 1,          1, 0],
+                            [0, 0,   0, 1,          0, 1],])
 
         # Matrice d'observation, on observe que x et y
-        self.H = np.matrix([[1, 0, 0, 0],
-                            [0, 1, 0, 0]])
+        self.H = np.matrix([[1, 0, 0, 0, 0, 0],
+                            [0, 1, 0, 0, 0, 0]])
 
-        self.Q = np.matrix([[1, 0, 0, 0],
-                            [0, 1, 0, 0],
-                            [0, 0, 1, 0],
-                            [0, 0, 0, 1]])
+        v = 1E-15
+        self.Q = np.matrix([[v, 0, 0, 0, 0, 0],
+                            [0, v, 0, 0, 0, 0],
+                            [0, 0, v, 0, 0, 0],
+                            [0, 0, 0, v, 0, 0],
+                            [0, 0, 0, 0, v, 0],
+                            [0, 0, 0, 0, 0, v]])
 
-        self.R = np.matrix([[1, 0],
-                            [0, 1]])
+        self.R = np.matrix([[v, 0],
+                            [0, v]])
 
         self.P = np.eye(self.A.shape[1])
 
