@@ -69,7 +69,7 @@ def apply_kalman(img, tab_centre, tab_centre_pred):
         cv.circle(img, (int(etat[0].item()), int(etat[1].item())), 2, (0, 255, 0), 5)
         cv.arrowedLine(img, (int(etat[0].item()), int(etat[1].item())),
                        (int(etat[0].item() + etat[2].item()), int(etat[1].item() + etat[3].item())),
-                       color=(0, 255, 0),thickness=3,tipLength=0.2)
+                       color=(0, 255, 0), thickness=3, tipLength=0.2)
         if tab_centre[-1] is not None:
             KF.update(np.expand_dims(tab_centre[-1], axis=-1))
         else:
@@ -77,7 +77,7 @@ def apply_kalman(img, tab_centre, tab_centre_pred):
     return img
 
 
-def isolation(img, vid, tab_centre,tab_centre_pred):
+def isolation(img, vid, tab_centre, tab_centre_pred):
     if vid == "mousse":
         low = np.array([100, 85, 85])
         high = np.array([155, 255, 175])
@@ -111,8 +111,8 @@ def create_kalman(tab_centre):
     global KF
     centroid = tab_centre[-1]
     if tab_centre[-2] is not None and tab_centre[-1] is not None:
-        speedx = (tab_centre[-1][0] - tab_centre[-2][0])/C.delta_t
-        speedy = (tab_centre[-1][1] - tab_centre[-2][1])/C.delta_t
+        speedx = (tab_centre[-1][0] - tab_centre[-2][0]) / C.delta_t
+        speedy = (tab_centre[-1][1] - tab_centre[-2][1]) / C.delta_t
         KF = KalmanFilter(C.delta_t, centroid, (speedx, speedy))
 
 
@@ -144,7 +144,7 @@ def play_vid(cap, vid, tab_centre, tab_centre_pred):
     while cap.isOpened():
         # Capture frame-by-frame
         ret, frame = cap.read()
-        if ret == True:
+        if ret:
             # Display the resulting frame
             frame = homographies(frame)
             frame = isolation(frame, vid, tab_centre, tab_centre_pred)
@@ -174,6 +174,5 @@ if __name__ == '__main__':
     tab_centroid_pred = []
     play_vid(cap, vid_name, tab_centroid, tab_centroid_pred)
 
-    # When everything done, release
-    # the video capture object
+    # When everything done, release the video capture object
     cap.release()

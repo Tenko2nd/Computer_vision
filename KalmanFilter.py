@@ -9,12 +9,12 @@ class KalmanFilter(object):
         self.E = np.matrix([[point[0]], [point[1]], [speed[0]], [speed[1]], [0], [9.81]])
 
         # Matrice de transition
-        self.A = np.matrix([[1, 0,   self.dt, 0,    (self.dt**2)/2, 0],
-                            [0, 1,   0, self.dt,    0, -(self.dt**2)/2],
-                            [0, 0,   1, 0,          self.dt, 0],
-                            [0, 0,   0, 1,          0, self.dt],
-                            [0, 0,   0, 1,          1, 0],
-                            [0, 0,   0, 1,          0, 1],])
+        self.A = np.matrix([[1, 0, self.dt, 0, (self.dt ** 2) / 2, 0],
+                            [0, 1, 0, self.dt, 0, (self.dt ** 2) / 2],
+                            [0, 0, 1, 0, self.dt, 0],
+                            [0, 0, 0, 1, 0, self.dt],
+                            [0, 0, 0, 0, 1, 0],
+                            [0, 0, 0, 0, 0, 1], ])
 
         # Matrice d'observation, on observe que x et y
         self.H = np.matrix([[1, 0, 0, 0, 0, 0],
