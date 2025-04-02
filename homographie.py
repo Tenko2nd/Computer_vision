@@ -131,21 +131,21 @@ def isolation(img, vid):
     if vid == "mousse":
         low = np.array([100, 85, 85])
         high = np.array([155, 255, 175])
-        min_area = 1225
+        min_area = 124 * math.pow(math.pi, math.log2(C.factor))  # ajustement automatique peu fiable a cause homographie
         hsv = cv.cvtColor(img, cv.COLOR_RGB2HSV)
         mask = cv.inRange(hsv, low, high)
         mask = cv.dilate(mask, kernel=np.ones((2, 2), np.uint8), iterations=4)
     elif vid == "rugby":
         low = np.array([10, 150, 40])
         high = np.array([50, 255, 120])
-        min_area = 4500
+        min_area = 455 * math.pow(math.pi, math.log2(C.factor))  # ajustement automatique peu fiable a cause homographie
         hsv = cv.cvtColor(img, cv.COLOR_RGB2HSV)
         mask = cv.inRange(hsv, low, high)
         mask = cv.dilate(mask, kernel=np.ones((4, 4), np.uint8), iterations=3)
     else:
         low = np.array([60, 50, 80])
         high = np.array([170, 150, 210])
-        min_area = 600
+        min_area = 61 * math.pow(math.pi, math.log2(C.factor))  # ajustement automatique peu fiable a cause homographie
         hsv = cv.cvtColor(img, cv.COLOR_RGB2HSV)
         mask = cv.inRange(hsv, low, high)
         mask = cv.dilate(mask, kernel=np.ones((2, 2), np.uint8), iterations=4)
@@ -224,7 +224,7 @@ def play_vid(cap, vid):
 
 if __name__ == '__main__':
     # choisir un no de video pour la selectionner
-    vid_name = 'mousse'
+    vid_name = 'tennis'
     if vid_name == 'mousse':
         cap = cv.VideoCapture("Ressources/Video/Mousse.mp4")
     elif vid_name == 'rugby':
@@ -268,8 +268,8 @@ if __name__ == '__main__':
           f"\nLa vitesse initiale était de : {tab_speed[0]}m/s"
           f"\nLa balle touchera le sol à {max(poly.roots)/(100*C.factor):.2f}m du début du tableau")  #conversion px->cm->m
 
-    print("\nVoici les résultats pour notre filtre de Kahlman : ")
     for centre in tab_centre_pred:
         if centre[1] >= 115*C.factor+100*C.factor:
+            print("\nVoici les résultats pour notre filtre de Kahlman : ")
             print(f"La balle touchera le sol à {centre[0] / (100 * C.factor):.2f}m du début du tableau")
             break
