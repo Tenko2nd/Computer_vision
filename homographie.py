@@ -185,6 +185,7 @@ def apply_moments(mask, img, min_area):
     contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)  # trouve le contour ...
     cnt = max(contours, key=cv.contourArea)  # maximal...
     area = cv.contourArea(cnt)  # et son aire
+    print(area)
     if area < min_area:  # si l'aire n"est pas assez grande (la balle n'est pas entièrement visible), ne fait rien
         tab_centre.append(None)
         return img
@@ -223,8 +224,8 @@ def play_vid(cap, vid):
 
 
 if __name__ == '__main__':
-    # choisir un no de video pour la selectionner
-    vid_name = 'tennis'
+    # choisir un nom de video pour la selectionner
+    vid_name = 'mousse'
     if vid_name == 'mousse':
         cap = cv.VideoCapture("Ressources/Video/Mousse.mp4")
     elif vid_name == 'rugby':
@@ -260,6 +261,7 @@ if __name__ == '__main__':
     print("liste vitesse predis : ", tab_speed_pred)
     print("liste parabole : ", tab_coeff_parabole)
     a, b, c = tab_coeff_parabole[-1]*-1  # car repère inversé par rapport au monde réel (prend la dernière parabole)
+    print(c)
     c = c+115*C.factor+100*C.factor  # ajout de la hauteur du tableau et de la hauteur entre le sol et le tableau (en pixel)
     poly = np.poly1d([a, b, c])
     print("\nVoici les résultats pour notre parabole : "
@@ -270,6 +272,6 @@ if __name__ == '__main__':
 
     for centre in tab_centre_pred:
         if centre[1] >= 115*C.factor+100*C.factor:
-            print("\nVoici les résultats pour notre filtre de Kahlman : ")
+            print("\nVoici les résultats pour notre filtre de Kalman : ")
             print(f"La balle touchera le sol à {centre[0] / (100 * C.factor):.2f}m du début du tableau")
             break
