@@ -35,7 +35,7 @@ Pour visualiser les simulations vidéo basées sur l'homographie :
 
     ```python
     if __name__ == '__main__':
-        # choisir un nom de video pour la selectionner (parmis ['mousse', 'rugby', 'tennis'])
+        # choisir un nom de video pour la selectionner (parmi ['mousse', 'rugby', 'tennis'])
         vid_name = 'tennis'
     ```
 
