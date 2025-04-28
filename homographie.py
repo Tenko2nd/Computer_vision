@@ -223,7 +223,7 @@ def play_vid(cap, vid):
 
 
 if __name__ == '__main__':
-    # choisir un nom de video pour la selectionner
+    # choisir un nom de video pour la selectionner (parmis ['mousse', 'rugby', 'tennis'])
     vid_name = 'tennis'
     if vid_name == 'mousse':
         cap = cv.VideoCapture("Ressources/Video/Mousse.mp4")
